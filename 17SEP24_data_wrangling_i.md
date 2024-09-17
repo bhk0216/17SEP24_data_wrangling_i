@@ -84,7 +84,7 @@ names(litters_df)
 ```
 
 ``` r
-pups_df = read_csv(file = "~/Desktop/Columbia Biostatistics MS/Courses/P8105/Lecture Notes/17SEP24_data_wrangling_i/data_import_examples/FAS_pups.csv") # absolute path
+pups_df = read_csv("~/Desktop/Columbia Biostatistics MS/Courses/P8105/Lecture Notes/17SEP24_data_wrangling_i/data_import_examples/FAS_pups.csv") # absolute path
 ```
 
     ## Rows: 313 Columns: 6
