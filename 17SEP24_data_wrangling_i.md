@@ -166,6 +166,9 @@ Data summary
   values. (e.g. na = “N/A”)
 - `skip`: skips a specified number of rows before reading the data
 
+Run `? read_csv()` to see what other arguments there are in addition to
+these.
+
 ``` r
 litters_df_2 = 
     read_csv(file = "./data_import_examples/FAS_litters.csv",
