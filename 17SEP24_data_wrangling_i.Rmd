@@ -109,6 +109,7 @@ head(pups_df_2)
 
 ### Other file formats
 For Excel files, use `readxl` package that has `read_excel` function.
+
 * `sheet`option: useful when there are multiple sheets in the Excel file
 * `range` option: want to read in a specific data rectangle
 
