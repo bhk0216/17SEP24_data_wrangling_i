@@ -330,19 +330,44 @@ head(pulse_df, 5)
     ## 4 10026  72.7 male           20            6           18           16
     ## 5 10035  60.4 male            4            0            1            2
 
-### Comparisons with Base R
+### Comparisons with Base R (Never use `read.csv()`)
 
 `read.csv`, `read.table`, etc are base R functions (different from
 `read_csv` that come from `readr` package, outputs a tibble, and does
 NOT convert character cols to factors).
 
 - tend to be slower
-- outputs a data frame
+- outputs a data frame (does not show data types)
 - automatically convert characters to factors (less control over data
   types)
 
 ``` r
 pups_base = read.csv("./data_import_examples/FAS_pups.csv")
+head(pups_base, 5)
+```
+
+    ##   Litter.Number Sex PD.ears PD.eyes PD.pivot PD.walk
+    ## 1           #85   1       4      13        7      11
+    ## 2           #85   1       4      13        7      12
+    ## 3     #1/2/95/2   1       5      13        7       9
+    ## 4     #1/2/95/2   1       5      13        8      10
+    ## 5 #5/5/3/83/3-3   1       5      13        8      10
+
+``` r
+pups_base$S # short hand works
+```
+
+    ##   [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+    ##  [38] 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2
+    ##  [75] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+    ## [112] 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1
+    ## [149] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2
+    ## [186] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1
+    ## [223] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1
+    ## [260] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2
+    ## [297] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+
+``` r
 pups_readr = read_csv("./data_import_examples/FAS_pups.csv")
 ```
 
@@ -354,17 +379,6 @@ pups_readr = read_csv("./data_import_examples/FAS_pups.csv")
     ## 
     ## ℹ Use `spec()` to retrieve the full column specification for this data.
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-
-``` r
-head(pups_base, 5)
-```
-
-    ##   Litter.Number Sex PD.ears PD.eyes PD.pivot PD.walk
-    ## 1           #85   1       4      13        7      11
-    ## 2           #85   1       4      13        7      12
-    ## 3     #1/2/95/2   1       5      13        7       9
-    ## 4     #1/2/95/2   1       5      13        8      10
-    ## 5 #5/5/3/83/3-3   1       5      13        8      10
 
 ``` r
 head(pups_readr, 5)
@@ -380,21 +394,7 @@ head(pups_readr, 5)
     ## 5 #5/5/3/83/3-3       1         5        13          8        10
 
 ``` r
-pups_base$S
-```
-
-    ##   [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
-    ##  [38] 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2
-    ##  [75] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-    ## [112] 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1
-    ## [149] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2
-    ## [186] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1
-    ## [223] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1
-    ## [260] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2
-    ## [297] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
-
-``` r
-pups_readr$S
+pups_readr$S # does not work
 ```
 
     ## Warning: Unknown or uninitialised column: `S`.
