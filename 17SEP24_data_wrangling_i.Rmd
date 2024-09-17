@@ -2,6 +2,149 @@
 title: "17SEP24_data_wrangling_i"
 author: "Stella Koo"
 date: "2024-09-15"
-output: html_document
+output: github_document
 ---
 
+### Two kinds of paths:
+* Absolute: a file or folder's "full address" on the computer
+    * If directory moved, or project shared, absolute path to files will change and code won’t work
+* Relative: directions to a file or folder from the current working directory
+    * Portable, if directory moved or shared, the relative path will stay the same and code will work
+
+### Shorthand Notation for Pathnames
+* `~` Home Directory
+* `.` Current working directory
+* `..` One directory up from current working directory
+* `../..` Two directories up from current working directory
+* `gitignore` file: specifies intentionally untracked files that Git should ignore.
+
+### Importing data tables
+Use function from `readr` (included in tidyverse) to import data.
+
+* `janitor::clean_names()`: standardizes column names by converting them to a consistent, machine-friendly format
+* `package::function` allows using a function from a package without loading the whole library (e.g. `dplyr::filter`)
+* `conflicted` package: helps resolve ambiguity by forcing to explicitly choose which function to use when there's a conflict
+
+```{r}
+library(tidyverse)
+
+litters_df = read_csv(file = "./data_import_examples/FAS_litters.csv") # relative path
+names(litters_df) 
+# e.g Litter Number
+
+litters_df = janitor::clean_names(litters_df)
+names(litters_df)
+# with janitor::clean_names() function -> litter_number
+```
+```{r}
+pups_df = read_csv(file = "~/Desktop/Columbia Biostatistics MS/Courses/P8105/Lecture Notes/17SEP24_data_wrangling_i/data_import_examples/FAS_pups.csv") # absolute path
+```
+
+### Looking at data
+* `view`: opens a spreadsheet-like view of data frame (does not work well inside RMD files)
+* `str`: displays structure of R object (e.g data types of each column for data frames)
+* `head`:returns the first few rows of data frame
+* `tail`: returns the last few rows of data frame
+* `skimr::skim()` function: part of the skimr package, which provides a more comprehensive summary of data frames 
+
+```{r}
+tail(litters_df, 5)
+```
+```{r}
+skimr::skim(litters_df)
+```
+
+### Arguments to `read*`
+* `col_names`: default is TRUE (first row of the dataset is automatically used as the column names). FALSE generic column names like `X1`, `X2`, ..., are assigned
+* `na`: specify which values in data should be treated as missing values. (e.g. na = "N/A")
+* `skip`: skips a specified number of rows before reading the data
+
+```{r}
+litters_df_2 = 
+    read_csv(file = "./data_import_examples/FAS_litters.csv",
+    skip = 10, col_names = FALSE)
+
+head(litters_df_2)
+```
+```{r}
+litters_df_3 = 
+    read_csv(
+        file = "./data_import_examples/FAS_litters.csv",
+        na = c(".", "NA", ""))
+
+head(litters_df_3)
+```
+
+### Parsing columns
+`read_* functions` (e.g. `read_csv`) will automatically guess the data type of columns. However, if you want to give explicit column specifications use `cols` functions:
+
+```{r}
+litters_df_4= 
+    read_csv(file = "./data_import_examples/FAS_litters.csv",
+        na = c(".", "NA", ""),
+    col_types = cols(
+      Group = col_factor(),
+      `Litter Number` = col_character(),
+      `GD0 weight` = col_double(),
+      `GD18 weight` = col_double(),
+      `GD of Birth` = col_integer(),
+      `Pups born alive` = col_integer(),
+      `Pups dead @ birth` = col_integer(),
+      `Pups survive` = col_integer()
+    )
+  )
+
+tail(litters_df_4)
+```
+
+```{r}
+pups_df_2 = read_csv(file = "./data_import_examples/FAS_pups.csv",
+                     na = c(".", "NA"),
+                     col_types = "fddddd" # factor, double, double, ...
+)
+
+head(pups_df_2)
+```
+
+### Other file formats
+For Excel files, use `readxl` package that has `read_excel` function.
+* `sheet`option: useful when there are multiple sheets in the Excel file
+* `range` option: want to read in a specific data rectangle
+
+```{r}
+library(readxl)
+
+mlb11_df = read_excel("./data_import_examples/mlb11.xlsx", n_max = 20)
+
+head(mlb11_df, 5)
+```
+
+For SAS, Stata, SPSS files, use `haven` package.
+```{r}
+library(haven)
+
+pulse_df = read_sas("./data_import_examples/public_pulse_data.sas7bdat")
+
+head(pulse_df, 5)
+```
+
+### Comparisons with Base R
+`read.csv`, `read.table`, etc are base R functions (different from `read_csv` that come from `readr` package, outputs a tibble, and does NOT convert character cols to factors).
+* tend to be slower
+* outputs a data frame
+* automatically convert characters to factors (less control over data types)
+
+```{r}
+pups_base = read.csv("./data_import_examples/FAS_pups.csv")
+pups_readr = read_csv("./data_import_examples/FAS_pups.csv")
+
+head(pups_base, 5)
+head(pups_readr, 5)
+
+pups_base$S
+pups_readr$S
+```
+
+## Exporting data
+Use `write_*` function in `readr` package.
+(e.g. write_csv(data_frame, "output.csv"))
