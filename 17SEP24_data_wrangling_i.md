@@ -296,7 +296,7 @@ For Excel files, use `readxl` package that has `read_excel` function.
 ``` r
 library(readxl)
 
-mlb11_df = read_excel("./data_import_examples/mlb11.xlsx", n_max = 20)
+mlb11_df = read_excel("./data_import_examples/mlb11.xlsx", sheet = "mlb11", n_max = 20)
 
 head(mlb11_df, 5)
 ```
@@ -334,9 +334,12 @@ head(pulse_df, 5)
 
 `read.csv`, `read.table`, etc are base R functions (different from
 `read_csv` that come from `readr` package, outputs a tibble, and does
-NOT convert character cols to factors). \* tend to be slower \* outputs
-a data frame \* automatically convert characters to factors (less
-control over data types)
+NOT convert character cols to factors).
+
+- tend to be slower
+- outputs a data frame
+- automatically convert characters to factors (less control over data
+  types)
 
 ``` r
 pups_base = read.csv("./data_import_examples/FAS_pups.csv")
