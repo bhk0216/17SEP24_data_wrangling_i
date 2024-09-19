@@ -3,6 +3,8 @@
 Stella Koo
 2024-09-18
 
+# Functions in `dplyr` package (in `tidyverse`)
+
 `options()` sets global defaults for the session in which that specific
 RMD is executed. They will apply to the entire document unless
 overridden later in the code. ONLY affects console. Output file for
