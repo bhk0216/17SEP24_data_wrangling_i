@@ -1,0 +1,184 @@
+---
+title: "19SEP24_data_manipulation_dplyr"
+author: "Stella Koo"
+date: "2024-09-18"
+output: github_document
+---
+
+`options()` sets global defaults for the session in which that specific RMD is executed. They will apply to the entire document unless overridden later in the code. ONLY affects console. Output file for HTML, PDF, etc (except github) shows many rows. 
+
+```{r message = FALSE}
+library(tidyverse)
+
+options(tibble.print_min = 3)
+
+litters_df = read_csv("./data_import_examples/FAS_litters.csv", na = c("NA", ".", ""))
+litters_df = janitor::clean_names(litters_df)
+
+pups_df = read_csv("./data_import_examples/FAS_pups.csv", na = c("NA", "."))
+pups_df = janitor::clean_names(pups_df)
+```
+
+## `Select`
+
+`select` allows to specify a subset of columns in a data table.
+
+* Can specify the columns you want to keep by listing all of them.
+
+```{r}
+select(litters_df, group, litter_number, gd0_weight, pups_born_alive)
+```
+
+* Can specify a range of columns to keep.
+
+```{r}
+select(litters_df, group:gd_of_birth)
+```
+
+* Can specify which columns to remove.
+
+```{r}
+select(litters_df, -pups_survive)
+```
+
+* Can rename variables as part of the process.
+
+```{r}
+select(litters_df, GROUP = group, LiTtEr_NuMbEr = litter_number)
+```
+
+* If want to rename columns while keeping everything, use `rename` instead of `select`.
+
+```{r}
+rename(litters_df, GROUP = group, LiTtEr_NuMbEr = litter_number)
+```
+
+* Use helper functions, list available in `?select_helpers`. E.g. `start_with()`, `ends_with()`, `contains()`)
+
+```{r}
+select(litters_df, starts_with("gd"))
+```
+
+* Use `everything()` helper function to reorganize columns without discarding anything.
+
+```{r}
+select(litters_df, litter_number, pups_survive, everything())
+```
+
+* `relocate` function does the same thing as `everything` helper function used inside `select`.
+
+```{r}
+relocate(litters_df, litter_number, pups_survive)
+```
+
+`select` will export a data frame even if only one column is selected. Use `pull` if only vector of that column wanted.
+
+#### Learning Assessment
+
+```{r}
+select(pups_df, litter_number:pd_ears)
+```
+
+## `Filter`
+
+* Uses comparison operators (`>`, `>=`, `<`, `<=`, `==`, and `!=`)
+* `%in%` to detect if values appear in a set
+* `is.na()` to find missing values
+* can be combined with other comparisons using the logical operators `&` and `|`, or negated using `!`
+* Examples: 
+
+gd_of_birth == 20
+pups_born_alive >= 2
+pups_survive != 4
+!(pups_survive == 4)
+group %in% c("Con7", "Con8")
+group == "Con7" & gd_of_birth == 20
+
+```{r}
+filter_litters_df = litters_df %>% 
+  select(group, pups_survive) %>% 
+  filter(group %in% c("Con7", "Con8"), pups_survive != 4)
+
+filter_litters_df
+```
+
+To omit missing observations, it is better to use `drop_na` from `tidyr` package:
+
+* `drop_na(litters_df)` will remove any row with a missing value.
+* `drop_na(litters_df, wt_increase)` will remove rows for which `wt_increase` is missing.
+
+#### Learning Assessment
+
+```{r}
+filter(pups_df, sex == 2, pd_walk < 11)
+```
+
+## `Mutate`
+
+`mutate()` is used add new columns or change existing ones based on calculations or transformations.
+
+```{r}
+mutate(litters_df,
+  wt_gain = gd18_weight - gd0_weight,
+  group = str_to_lower(group)
+)
+```
+
+#### Learning Assessment
+
+```{r}
+mutate(pups_df, 
+       pd_pivot_minus7 = pd_pivot - 7,
+       sum_pd = pd_ears + pd_eyes + pd_pivot + pd_walk
+       )
+```
+
+## `Arrange`
+
+`arrange()` reorders rows based on the values of one or more columns. By deafult, arranges in ascending order. Use `desc()` helper function for descending order.
+
+```{r}
+head(arrange(litters_df, group, pups_born_alive), 6)
+```
+
+## `|>` Piping
+
+Piping is a way to streamline code by passing the result of one function directly as the input to the next function.
+
+```{r}
+litters_df = 
+  read_csv("./data_import_examples/FAS_litters.csv", na = c("NA", ".", "")) |> 
+  janitor::clean_names() |> 
+  select(-pups_survive) |> 
+  mutate(
+    wt_gain = gd18_weight - gd0_weight,
+    group = str_to_lower(group)) |> 
+  drop_na(wt_gain)
+
+litters_df
+```
+
+* Easiest way to read |> is “then”
+* Keyboard shortcut: Cmd + Shift + M (Mac)
+* Functions in `dplyr` (and much of `tidyverse`) are designed to work smoothly with the pipe operator.
+
+For the following e.g, _ is a placeholder for the piped data. It is necessary to indicate where the object being piped should go. 
+
+```{r}
+litters_df |>
+  lm(wt_gain ~ pups_born_alive, data = _) |>
+  broom::tidy()
+```
+
+#### Learning Assessment
+
+```{r}
+pups_df |> 
+  janitor::clean_names() |>
+  filter(sex == 1) |>
+  select(-pd_ears) |>
+  mutate(pd_pivot_greater7 = pd_pivot > 7) # performs logical comparison (TRUE or FALSE)
+```
+
+* `|>` vs `%>%`: they are interchangeable. `%>%` has been introduced earlier. Thus, `|>`, the newer version, cannot be used in older R versions.
+
