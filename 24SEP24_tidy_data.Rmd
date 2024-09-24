@@ -4,3 +4,202 @@ author: "Stella Koo"
 date: "2024-09-23"
 output: github_document
 ---
+
+# Functions in `tidyr` package (in `tidyverse`)
+
+```{r message = FALSE}
+library(tidyverse)
+options(tibble.print_min = 5)
+```
+
+Use `haven` package to load Pulse Data with SAS file type:
+```{r}
+pulse_df = 
+  haven::read_sas("./data_import_examples/public_pulse_data.sas7bdat") |>
+  janitor::clean_names()
+
+pulse_df
+```
+
+## `pivot_longer()`
+Use `pivot_longer()` function that makes datasets longer by increasing number of rows and decreasing the number of columns:
+```{r}
+pulse_tidy_df = 
+  pivot_longer(
+    pulse_df,
+    bdi_score_bl:bdi_score_12m,
+    names_to = "visit",
+    names_prefix = "bdi_score_",
+    values_to = "bdi"
+  )
+
+pulse_tidy_df
+```
+
+* `names_prefix`: removes common prefix from the column names that are pivoting into the "long" format.
+* `values_to`: specifies the name of the new column that will store the values from the pivoting columns.
+
+The following shows a tidier dataset by changing `bl` to `00m`, converting `visit` to a factor variable, and rounding `bdi` to integers. 
+```{r}
+pulse_df = 
+  haven::read_sas("./data_import_examples/public_pulse_data.sas7bdat") |>
+  janitor::clean_names() |>
+  pivot_longer(
+    bdi_score_bl:bdi_score_12m,
+    names_to = "visit", 
+    names_prefix = "bdi_score_",
+    values_to = "bdi") |>
+  mutate(
+    visit = replace(visit, visit == "bl", "00m"),
+    visit = factor(visit),
+    bdi = round(bdi))
+
+print(pulse_df, n = 12)
+```
+
+#### Learning Assessment
+```{r}
+litter_tidy_df = 
+  read_csv("./data_import_examples/FAS_litters.csv") |>
+  janitor::clean_names() |>
+  pivot_longer(
+    gd0_weight:gd18_weight,
+    names_to = "gd",
+    values_to = "weight") |>
+  mutate(gd = recode(gd, gd0_weight = 0, gd18_weight = 18)) |>
+  select(litter_number, gd, weight)
+
+head(litter_tidy_df)
+```
+
+## `pivot_wider()`
+`pivot_wider()` transforms data from a long to a wide format. Takes values from a column and spreads them across multiple columns.
+
+```{r}
+analysis_result = 
+  tibble(
+    group = c("treatment", "treatment", "placebo", "placebo"),
+    time = c("pre", "post", "pre", "post"),
+    mean = c(4, 8, 3.5, 4)
+  )
+
+analysis_result
+```
+
+```{r}
+pivot_wider(
+  analysis_result, 
+  names_from = "time", 
+  values_from = "mean")
+```
+
+## Binding rows
+Non-tidiness often stems from relevant data spread across multiple tables. These tables are basically the same and can be stacked to produce a tidy dataset.
+
+```{r}
+fellowship_ring = 
+  readxl::read_excel("./data_import_examples/LotR_Words.xlsx", range = "B3:D6") |>
+  mutate(movie = "fellowship_ring")
+
+two_towers = 
+  readxl::read_excel("./data_import_examples/LotR_Words.xlsx", range = "F3:H6") |>
+  mutate(movie = "two_towers")
+
+return_king = 
+  readxl::read_excel("./data_import_examples/LotR_Words.xlsx", range = "J3:L6") |>
+  mutate(movie = "return_king")
+```
+
+```{r}
+lotr_tidy =
+  bind_rows(fellowship_ring, two_towers, return_king) |>
+  janitor::clean_names() |>
+  pivot_longer(
+    female:male,
+    names_to = "gender", 
+    values_to = "words") |>
+  mutate(race = str_to_lower(race)) |> 
+  select(movie, everything()) 
+
+lotr_tidy
+```
+
+## Joining Datasets
+Data can be spread across multiple related tables, in which case it is necessary to combine or join them prior to analysis.
+
+* Inner: keeps data that appear in both x and y
+* Left: keeps data that appear in x
+* Right: keeps data that appear in y
+* Full: keeps data that appear in either x or y
+
+```{r message = FALSE}
+pup_df = 
+  read_csv(
+    "./data_import_examples/FAS_pups.csv",
+    na = c("NA", "", ".")) |>
+  janitor::clean_names() |>
+  mutate(
+    sex = 
+      case_match(
+        sex, 
+        1 ~ "male", 
+        2 ~ "female"),
+    sex = as.factor(sex)) 
+
+litter_df = 
+  read_csv(
+    "./data_import_examples/FAS_litters.csv",
+    na = c("NA", ".", "")) |>
+  janitor::clean_names() |>
+  separate(group, into = c("dose", "day_of_tx"), sep = 3) |>
+  relocate(litter_number) |>
+  mutate(
+    wt_gain = gd18_weight - gd0_weight,
+    dose = str_to_lower(dose))
+```
+
+* `separate(group, into = c("dose", "day_of_tx"), sep = 3)`: splits the group column into two new columns: dose and day_of_tx. The split occurs after the third character.
+* `relocate(litter_number)`: moves the litter_number column to the front of the dataframe.
+
+```{r}
+fas_df = 
+  left_join(pup_df, litter_df, by = "litter_number")
+
+fas_df
+```
+
+#### Learning Assessment
+
+* `str_replace_all(id, "student_", "")`: removes "student_" from the rows in `id` column. (from `stringr` package in `tidyverse`)
+
+```{r}
+surv_od_df = 
+  read_csv("./survey_results/surv_os.csv",
+    na = c("NA", ".", "")) |>
+  janitor::clean_names() |> 
+  rename(id = what_is_your_uni, os = what_operating_system_do_you_use) |>
+  mutate(id = str_replace_all(id, "student_", ""))
+
+surv_program_df = read_csv("./survey_results/surv_program_git.csv",
+    na = c("NA", ".", "")) |>
+  janitor::clean_names() |> 
+  rename(
+    id = what_is_your_uni, 
+    prog = what_is_your_degree_program,
+    git_exp = which_most_accurately_describes_your_experience_with_git) |>
+    mutate(id = str_replace_all(id, "student_", ""))
+
+surv_df = inner_join(surv_od_df, surv_program_df)
+print(surv_df, 10)
+```
+
+The `inner_join()` gives warnings about “many-to-many” relationships. These indicate that the matching variable is not unique. Row 7 of x matches multiple rows in y:
+
+```{r}
+surv_od_df |> slice(7)
+surv_program_df |> filter(id == "15")
+```
+
+* `slice(7)`: from the `dplyr` package, extracts row 7 from `surv_od_df` dataframe.
+* `filter(id == "15")`: filters rows with `id == 15`
+
